@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Lawyers’ Quora</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 1000px;
+      margin: auto;
+      background-color: #f9f9f9;
+    }
+    h1, h2 {
+      color: #004aad;
+    }
+    form, .box {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 25px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.08);
+    }
+    input, textarea, select {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0 15px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background-color: #004aad;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .reply-list {
+      margin-top: 10px;
+      padding-left: 10px;
+      border-left: 3px solid #004aad;
+    }
+    .lawyer-card {
+      border: 1px solid #ddd;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-radius: 10px;
+      background-color: #fff;
+    }
+    .filter-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    .filter-group select {
+      flex: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Lawyers’ Quora</h1>
+
+  <!-- Legal Query Form -->
+  <form id="queryForm">
+    <h2>Post a Legal Query</h2>
+    <input type="text" id="name" placeholder="Your Name" required />
+    <input type="text" id="location" placeholder="Your Location" required />
+    <select id="area">
+      <option value="">Select Area of Law</option>
+      <option value="Criminal Law">Criminal Law</option>
+      <option value="Family Law">Family Law</option>
+      <option value="Corporate Law">Corporate Law</option>
+      <option value="Property Law">Property Law</option>
+      <option value="Civil Law">Civil Law</option>
+    </select>
+    <textarea id="query" rows="4" placeholder="Your legal question..." required></textarea>
+    <button type="submit">Post Query</button>
+  </form>
+
+  <!-- Display Queries -->
+  <h2>Recent Queries</h2>
+  <div id="queries"></div>
+
+  <!-- Lawyer Directory -->
+  <h2>Find a Lawyer</h2>
+
+  <div class="filter-group">
+    <select id="filter-area">
+      <option value="">All Areas</option>
+      <option value="Criminal Law">Criminal Law</option>
+      <option value="Family Law">Family Law</option>
+      <option value="Corporate Law">Corporate Law</option>
+      <option value="Property Law">Property Law</option>
+      <option value="Civil Law">Civil Law</option>
+    </select>
+
+    <select id="filter-location">
+      <option value="">All Locations</option>
+      <option value="Delhi">Delhi</option>
+      <option value="Mumbai">Mumbai</option>
+      <option value="Bangalore">Bangalore</option>
+      <option value="Pune">Pune</option>
+    </select>
+
+    <select id="filter-court">
+      <option value="">All Court Levels</option>
+      <option value="Supreme Court">Supreme Court</option>
+      <option value="High Court">High Court</option>
+      <option value="District Court">District Court</option>
+    </select>
+  </div>
+
+  <div id="lawyerDirectory"></div>
+
+  <script>
+    const queryForm = document.getElementById("queryForm");
+    const queriesContainer = document.getElementById("queries");
+
+    queryForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+      const name = document.getElementById("name").value;
+      const location = document.getElementById("location").value;
+      const area = document.getElementById("area").value;
+      const query = document.getElementById("query").value;
+
+      const queryBox = document.createElement("div");
+      queryBox.className = "box";
+      queryBox.innerHTML = `
+        <strong>${name}</strong> (${area}, ${location})<br />
+        <p>${query}</p>
+        <button class="reply-btn">Reply</button>
+        <div class="reply-form" style="display:none;">
+          <input type="text" placeholder="Your Name" class="replier-name" required />
+          <textarea rows="2" placeholder="Your reply..." class="replier-text" required></textarea>
+          <button class="submit-reply">Submit Reply</button>
+        </div>
+        <div class="reply-list"></div>
+      `;
+      queriesContainer.prepend(queryBox);
+      queryForm.reset();
+    });
+
+    document.body.addEventListener("click", function (e) {
+      if (e.target.classList.contains("reply-btn")) {
+        const replyForm = e.target.nextElementSibling;
+        replyForm.style.display = replyForm.style.display === "none" ? "block" : "none";
+      }
+
+      if (e.target.classList.contains("submit-reply")) {
+        const formDiv = e.target.parentElement;
+        const replierName = formDiv.querySelector(".replier-name").value.trim();
+        const replyText = formDiv.querySelector(".replier-text").value.trim();
+        const replyList = formDiv.nextElementSibling;
+
+        if (replierName && replyText) {
+          const reply = document.createElement("div");
+          reply.className = "single-reply";
+          reply.innerHTML = `<strong>${replierName}:</strong> ${replyText}`;
+          replyList.appendChild(reply);
+          formDiv.querySelector(".replier-name").value = "";
+          formDiv.querySelector(".replier-text").value = "";
+          formDiv.style.display = "none";
+        }
+      }
+    });
+
+    // Sample Lawyer Data
+    const lawyers = [
+      { name: "Adv. Neha Sharma", code: "DEL123", location: "Delhi", area: "Criminal Law", court: "Supreme Court" },
+      { name: "Adv. Rajiv Patel", code: "MUM456", location: "Mumbai", area: "Corporate Law", court: "High Court" },
+      { name: "Adv. Kavita Menon", code: "BLR789", location: "Bangalore", area: "Family Law", court: "District Court" },
+      { name: "Adv. Arjun Rao", code: "PNQ101", location: "Pune", area: "Property Law", court: "High Court" }
+    ];
+
+    function renderLawyers(filterArea = "", filterLoc = "", filterCourt = "") {
+      const container = document.getElementById("lawyerDirectory");
+      container.innerHTML = "";
+
+      const filtered = lawyers.filter(lawyer =>
+        (!filterArea || lawyer.area === filterArea) &&
+        (!filterLoc || lawyer.location === filterLoc) &&
+        (!filterCourt || lawyer.court === filterCourt)
+      );
+
+      if (filtered.length === 0) {
+        container.innerHTML = "<p>No lawyers match the selected filters.</p>";
+        return;
+      }
+
+      filtered.forEach(lawyer => {
+        const div = document.createElement("div");
+        div.className = "lawyer-card";
+        div.innerHTML = `
+          <strong>${lawyer.name}</strong><br />
+          Code: ${lawyer.code}<br />
+          Location: ${lawyer.location}<br />
+          Specialization: ${lawyer.area}<br />
+          Court Level: ${lawyer.court}
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    // Initial Load
+    renderLawyers();
+
+    // Filters
+    document.getElementById("filter-area").addEventListener("change", updateFilters);
+    document.getElementById("filter-location").addEventListener("change", updateFilters);
+    document.getElementById("filter-court").addEventListener("change", updateFilters);
+
+    function updateFilters() {
+      const area = document.getElementById("filter-area").value;
+      const loc = document.getElementById("filter-location").value;
+      const court = document.getElementById("filter-court").value;
+      renderLawyers(area, loc, court);
+    }
+  </script>
+
+</body>
+</html>
